@@ -5,7 +5,7 @@ class DominanceOrder(SageObject):
 
     def __init__(self, B):
         self.B = copy(B)
-        self.A = ClusterAlgebra(B,principal_coefficients=True)
+        self.A = ClusterAlgebra(B, principal_coefficients=True)
 
     def paths_up_to_length(self, k):
         paths = [ s.path_from_initial_seed() for s in self.A.seeds(mutating_F=False, depth=k) ]
@@ -36,31 +36,23 @@ class DominanceOrder(SageObject):
         return polytope.plot(zorder=-1) + list_plot(pts, color='red', size=50) 
 
 def cut_along_sequence(g, B, seq):
-    current_polytope = Polyhedron(rays=B.columns(),base_ring=QQ).translation(g)
+    r"""
+    Return the intersection of the cones dominated by all the translates of g along the sequence of mutations seq
+    """
+    current_cone = Polyhedron(rays=B.columns(),base_ring=QQ).translation(g)
     if seq == []:
-        return current_polytope
-
+        return current_cone
     k = seq.pop()
     n = B.ncols()
-    I = identity_matrix(n)
-
     Hp = Polyhedron(ieqs=[(0,)*(k+1)+(1,)+(0,)*(n-k-1)])
-    Mp = copy(I)
-    Mp[:,k] = matrix(n,1, lambda i,_: max(B[i,k],0) if i != k else -1)
-
+    Mp = matrix(n, lambda i,j: (1 if i == j else 0) if j != k else (max(B[i,k],0) if i != k else -1) )
     Hm = Polyhedron(ieqs=[(0,)*(k+1)+(-1,)+(0,)*(n-k-1)])
-    Mm = copy(I)
-    Mm[:,k] = matrix(n,1, lambda i,_: max(-B[i,k],0) if i != k else -1)
-    
+    Mm = matrix(n, lambda i,j: (1 if i == j else 0) if j != k else (max(-B[i,k],0) if i != k else -1) )
     new_g = (Mp if g in Hp else Mm) * vector(g)
     new_B = copy(B)
     new_B.mutate(k)
-
-    new_polytope = cut_along_sequence(new_g, new_B, seq)
-    
-    new_polytope_p = Mm*(new_polytope.intersection(Hp))
-    new_polytope_m = Mp*(new_polytope.intersection(Hm))
-    
-    new_polytope = new_polytope_p.convex_hull(new_polytope_m)
-
-    return new_polytope.intersection(current_polytope)
+    polytope = cut_along_sequence(new_g, new_B, seq)
+    polytope_p = Mm*(polytope.intersection(Hp))
+    polytope_m = Mp*(polytope.intersection(Hm))
+    polytope = polytope_p.convex_hull(polytope_m)
+    return polytope.intersection(current_cone)
