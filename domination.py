@@ -56,3 +56,12 @@ def cut_along_sequence(g, B, seq):
     polytope_m = Mp*(polytope.intersection(Hm))
     polytope = polytope_p.convex_hull(polytope_m)
     return polytope.intersection(current_cone)
+
+def region_vertices(b,c,g):
+    #this is only for rank 2
+    vertices = []
+    vertices.append(g)
+    vertices.append(vector((0,(b*c+sqrt(b*c*(b*c-4)))*g[0]/(2*b)+g[1])))
+    vertices.append(vector(((b/sqrt(b*c*(b*c-4)))*((b*c+sqrt(b*c*(b*c-4)))*g[0]/b+(b*c+sqrt(b*c*(b*c-4)))*g[1]/2),(c/sqrt(b*c*(b*c-4)))*((b*c+sqrt(b*c*(b*c-4)))*g[1]/c+(b*c+sqrt(b*c*(b*c-4)))*g[0]/2))))
+    vertices.append(vector(((b*c+sqrt(b*c*(b*c-4)))*g[1]/(2*c)+g[0],0)))
+    return vertices
